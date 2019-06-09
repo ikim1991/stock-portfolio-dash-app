@@ -10,8 +10,8 @@ The Stock Portfolio Dash App has been deployed on Heroku. The Dash App can be fo
 The Stock Portfolio Dash App is an end-to-end stock watcher dashboard application that utilizes machine learning to predict the rating of a stock against the rating the stock is given by analysts in the industry. This repository consists of 4 main components:
   - The front-end stock portfolio dashboard built using Plotly and Dash
   - The Extract, Transform, and Load (ETL) process to extract features using Python and SQL
-  - Training the machine learning model and using it predict stock ratings on the front-end
-  - Error Analysis of machine learning model
+  - Training the machine learning model and using it to predict stock ratings
+  - Error Analysis of the machine learning model
 
 ## Front-end Dash App
 
@@ -36,16 +36,16 @@ The labels are as follows: [Sell, Underweight/Underperform, Hold, Overweight/Ove
 
 It is important to note that trying to predict stock prices or movement of stocks is impossible due to the large number of factors and the randomness in the stock market. Also the ratings are based on the perspective of professional analysts, some of which may have different opinions, and the analysts tend to get it wrong a lot of the times. The ratings predicted by the model or the ratings given by analysts should be taken with a grain of salt and should not be the sole indicator on making investment decisions.
 
-Running an [error analysis](./errorAnalysis.ipynb) we can assess the accuracy, precision and recall. Due to the randomness in initializing the training and test sets, the error will vary. Running the model 100 times, we can see an average accuracy rate of 45%.
+Running an [error analysis](./errorAnalysis.ipynb) we can assess the accuracy, precision and recall. Due to the randomness in initializing the training and test sets, the error will vary. Running the model 100 times, we can see an average accuracy rate of 46%.
 Running a classification report on one of the trials we get the following table below:
 
 |    rating   | precision | recall    | f1-score  |
 | ----------- |:---------:|:---------:|:---------:|
 | Buy         | 0.00      | 0.00      | 0.00      |
-| Hold        | 0.41      | 0.33      | 0.37      |
-| Overweight  | 0.50      | 0.83      | 0.62      |
+| Hold        | 0.50      | 0.48      | 0.49      |
+| Overweight  | 0.55      | 0.78      | 0.64      |
 | Sell        | 0.00      | 0.00      | 0.00      |
-| Underweight | 0.44      | 0.27      | 0.33      |
+| Underweight | 0.45      | 0.33      | 0.38      |
 
 Here are a few recommended ways of improving the model's accuracy:
 
