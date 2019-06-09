@@ -28,6 +28,21 @@ server = app.server
 
 # Dash Application Components
 app.layout = html.Div([
+    html.H1(
+        children='Stock Portfolio App',
+        style={
+            'width': '100%',
+            'text-align': 'center'
+        }
+    ),
+    html.Hr(),
+    html.H2(
+        children='My Portfolio',
+        style={
+            'width': '100%'
+        }
+    ),
+    html.Hr(),
     html.Div([
         dcc.Dropdown(
             id='portfolio-ticker',
@@ -100,6 +115,13 @@ app.layout = html.Div([
     html.Br(),
     html.Hr(),
     html.Br(),
+    html.H2(
+        children='My Watchlist',
+        style={
+            'width': '100%'
+        }
+    ),
+    html.Hr(),
     html.Div([
         dcc.Dropdown(
             id='watchlist-ticker',
