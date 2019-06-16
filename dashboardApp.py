@@ -195,16 +195,16 @@ def addToPortfolio(clicks, ticker, price, shares, data):
 
         for i in portfolio_list:
             try:
-                d = web.DataReader(i[0], 'iex', (datetime.datetime.now() - datetime.timedelta(days=5)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+                d = web.DataReader(i[0], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=5)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
                 rows.append(
                     {
                     'Ticker': i[0],
                     'Shares': i[2],
-                    'Last Price': round(d['close'][len(d)-1], 2),
-                    'Change(%)': round((100*(d['close'][len(d)-1] - d['close'][len(d)-2])) / d['close'][len(d)-1], 2),
+                    'Last Price': round(d['Adj Close'][len(d)-1], 2),
+                    'Change(%)': round((100*(d['Adj Close'][len(d)-1] - d['Adj Close'][len(d)-2])) / d['Adj Close'][len(d)-1], 2),
                     'Book Cost': round(i[1] * i[2], 2),
-                    'Market Value': round(d['close'][len(d)-1] * i[2], 2),
-                    'Unrealized Gain(%)': round(100*(((d['close'][len(d)-1] * i[2]) - (i[1] * i[2])) / (i[1] * i[2])), 2),
+                    'Market Value': round(d['Adj Close'][len(d)-1] * i[2], 2),
+                    'Unrealized Gain(%)': round(100*(((d['Adj Close'][len(d)-1] * i[2]) - (i[1] * i[2])) / (i[1] * i[2])), 2),
                     'Model Prediction': i[3],
                     'Analyst Rating': i[4]
                     }
@@ -231,7 +231,7 @@ def addToPortfolio(clicks, ticker, price, shares, data):
             conn.commit()
             new_data = data
 
-            d = web.DataReader(ticker, 'iex', (datetime.datetime.now() - datetime.timedelta(days=365)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+            d = web.DataReader(ticker, 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=365)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
             features = f.getFeatures(ticker.upper(), d)
             prediction = f.fitModel(features)
             cur.execute('UPDATE portfolio SET modelrating = %s, marketrating = %s WHERE ticker = %s', (prediction, features[0][-1], ticker.upper()))
@@ -242,11 +242,11 @@ def addToPortfolio(clicks, ticker, price, shares, data):
             new_row = {
                 'Ticker': ticker.upper(),
                 'Shares': shares,
-                'Last Price': round(d['close'][len(d)-1], 2),
-                'Change(%)': round((100*(d['close'][len(d)-1] - d['close'][len(d)-2])) / d['close'][len(d)-1], 2),
+                'Last Price': round(d['Adj Close'][len(d)-1], 2),
+                'Change(%)': round((100*(d['Adj Close'][len(d)-1] - d['Adj Close'][len(d)-2])) / d['Adj Close'][len(d)-1], 2),
                 'Book Cost': round(shares * price, 2),
-                'Market Value': round(d['close'][len(d)-1] * shares, 2),
-                'Unrealized Gain(%)': round((100*((d['close'][len(d)-1] * shares) - (price * shares))) / (price * shares),2),
+                'Market Value': round(d['Adj Close'][len(d)-1] * shares, 2),
+                'Unrealized Gain(%)': round((100*((d['Adj Close'][len(d)-1] * shares) - (price * shares))) / (price * shares),2),
                 'Model Prediction': prediction,
                 'Analyst Rating': features[0][-1]
             }
@@ -279,18 +279,19 @@ def updateTotal(rows, ticker, price, shares):
 
         for i in portfolio_list:
             try:
-                d = web.DataReader(i[0], (datetime.datetime.now() - datetime.timedelta(days=5)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+                d = web.DataReader(i[0], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=5)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
                 book = book + round(i[1] * i[2], 2)
-                market = market + round(d['close'][len(d)-1] * i[2], 2)
+                market = market + round(d['Adj Close'][len(d)-1] * i[2], 2)
+
             except:
                 continue
-
-        return [{
-            'Number of Stocks': len(portfolio_list),
-            'Portfolio Book Cost': book,
-            'Portfolio Market Value': market,
-            'Unrealized Portfolio Gain(%)':round((100*(market - book)) / book, 2)
-        }]
+        if book > 0:
+            return [{
+                'Number of Stocks': len(portfolio_list),
+                'Portfolio Book Cost': book,
+                'Portfolio Market Value': market,
+                'Unrealized Portfolio Gain(%)':round((100*(market - book)) / book, 2)
+            }]
 
     # Update table when new stock is added
     else:
@@ -334,7 +335,7 @@ def updatePortfolioFigure(days, rows, fig, p_rows):
         yaxis = []
         book = 0
         try:
-            d0 = web.DataReader(portfolio_list[0][0], 'iex', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+            d0 = web.DataReader(portfolio_list[0][0], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
             for i in d0.index:
                 xaxis.append(i)
         except:
@@ -343,9 +344,9 @@ def updatePortfolioFigure(days, rows, fig, p_rows):
         yaxis = np.zeros(len(xaxis))
         for i in portfolio_list:
             try:
-                d = web.DataReader(i[0], 'iex', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+                d = web.DataReader(i[0], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
                 book = book + round(i[1] * i[2], 2)
-                yaxis = yaxis + (d['close'] * i[2]).values
+                yaxis = yaxis + (d['Adj Close'] * i[2]).values
             except:
                 continue
 
@@ -369,7 +370,7 @@ def updatePortfolioFigure(days, rows, fig, p_rows):
         yaxis = []
         book = 0
         try:
-            d0 = web.DataReader(p_rows[0]['Ticker'], 'iex', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+            d0 = web.DataReader(p_rows[0]['Ticker'], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
             for i in d0.index:
                 xaxis.append(i)
         except:
@@ -378,9 +379,9 @@ def updatePortfolioFigure(days, rows, fig, p_rows):
         yaxis = np.zeros(len(xaxis))
         for i in p_rows:
             try:
-                d = web.DataReader(i['Ticker'], 'iex', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+                d = web.DataReader(i['Ticker'], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
                 book = book + round(i['Book Cost'], 2)
-                yaxis = yaxis + (d['close'] * i['Shares']).values
+                yaxis = yaxis + (d['Adj Close'] * i['Shares']).values
             except:
                 continue
 
@@ -418,14 +419,14 @@ def addToWatchlist(clicks, ticker, data):
         rows = []
         for i in watchlist_list:
             try:
-                d = web.DataReader(i[0], 'iex', (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+                d = web.DataReader(i[0], 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
                 rows.append(
                     {
                     'Ticker': i[0],
-                    'Last Price': round(d['close'][len(d)-1], 2),
-                    'Last close': round(d['close'][len(d)-2], 2),
-                    'Volume': d['volume'][len(d)-1],
-                    'Change(%)': round((100*(d['close'][len(d)-1] - d['close'][len(d)-2])) / d['close'][len(d)-1], 2),
+                    'Last Price': round(d['Adj Close'][len(d)-1], 2),
+                    'Last close': round(d['Adj Close'][len(d)-2], 2),
+                    'Volume': d['Volume'][len(d)-1],
+                    'Change(%)': round((100*(d['Adj Close'][len(d)-1] - d['Adj Close'][len(d)-2])) / d['Adj Close'][len(d)-1], 2),
                     'Model Prediction': i[1],
                     'Analyst Rating': i[2]
                     }
@@ -450,7 +451,7 @@ def addToWatchlist(clicks, ticker, data):
             conn.commit()
             new_data = data
 
-            d = web.DataReader(ticker, 'iex', (datetime.datetime.now() - datetime.timedelta(days=365)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+            d = web.DataReader(ticker, 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=365)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
             features = f.getFeatures(ticker.upper(), d)
             prediction = f.fitModel(features)
             cur.execute('UPDATE watchlist SET modelrating = %s, marketrating = %s WHERE ticker = %s', (prediction, features[0][-1], ticker.upper()))
@@ -459,10 +460,10 @@ def addToWatchlist(clicks, ticker, data):
             conn.close()
             new_row = {
                 'Ticker': ticker.upper(),
-                'Last Price': round(d['close'][len(d)-1], 2),
-                'Last close': round(d['close'][len(d)-2], 2),
-                'Volume': d['volume'][len(d)-1],
-                'Change(%)': round((100*(d['close'][len(d)-1] - d['close'][len(d)-2])) / d['close'][len(d)-1], 2),
+                'Last Price': round(d['Adj Close'][len(d)-1], 2),
+                'Last close': round(d['Adj Close'][len(d)-2], 2),
+                'Volume': d['Volume'][len(d)-1],
+                'Change(%)': round((100*(d['Adj Close'][len(d)-1] - d['Adj Close'][len(d)-2])) / d['Adj Close'][len(d)-1], 2),
                 'Model Prediction': prediction,
                 'Analyst Rating': features[0][-1]
             }
@@ -494,10 +495,10 @@ def updateWatchlistFigure(days, selected_row, fig, data):
         xaxis = []
         yaxis = []
         try:
-            d0 = web.DataReader(query, 'iex', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+            d0 = web.DataReader(query, 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
             for i,date in enumerate(d0.index):
                 xaxis.append(date)
-                yaxis.append(d0['close'][i])
+                yaxis.append(d0['Adj Close'][i])
         except:
             pass
 
@@ -520,10 +521,10 @@ def updateWatchlistFigure(days, selected_row, fig, data):
         xaxis = []
         yaxis = []
         try:
-            d0 = web.DataReader(selected, 'iex', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
+            d0 = web.DataReader(selected, 'yahoo', (datetime.datetime.now() - datetime.timedelta(days=days)).strftime('%Y-%m-%d'), datetime.datetime.now().strftime('%Y-%m-%d'))
             for i,date in enumerate(d0.index):
                 xaxis.append(date)
-                yaxis.append(d0['close'][i])
+                yaxis.append(d0['Adj Close'][i])
 
         except:
             pass
